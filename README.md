@@ -26,7 +26,7 @@ A multiplayer ghost hunting game built with Unity 6 (URP).
 
 ## Roadmap
 
-- [ ] Player controller
+- [x] Player controller
 - [ ] Flashlight
 - [ ] Door interactions
 - [ ] Ghost AI
