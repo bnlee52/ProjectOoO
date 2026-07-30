@@ -4,11 +4,20 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float walkSpeed = 5f;
+    [Header("Input")]
     [SerializeField] private InputActionReference moveAction;
+    [SerializeField] private InputActionReference sprintAction;
+
+    [Header("Movement")]
+    [SerializeField] private float walkSpeed = 5f;
+    [SerializeField] private float sprintSpeed = 8f;
+
+    [Header("Physics")]
     [SerializeField] private float gravity = -9.81f;
 
     private CharacterController controller;
+
+    private Vector2 moveInput;
     private Vector3 velocity;
 
     private void Awake()
@@ -19,45 +28,57 @@ public class PlayerMovement : MonoBehaviour
     private void OnEnable()
     {
         if (moveAction != null)
-        {
             moveAction.action.Enable();
-        }
+        if (sprintAction != null)
+            sprintAction.action.Enable();
     }
 
     private void OnDisable()
     {
         if (moveAction != null)
-        {
             moveAction.action.Disable();
-        }
+        if (sprintAction != null)
+            sprintAction.action.Disable();
     }
 
     private void Update()
     {
-        if (moveAction == null || moveAction.action == null)
-        {
-            return;
-        }
+        ReadInput();
+        ApplyGravity();
+        MovePlayer();
+    }
 
-        Vector2 input = moveAction.action.ReadValue<Vector2>();
-        Vector3 move = Vector3.zero;
+    private void ReadInput()
+    {
+        moveInput = moveAction.action.ReadValue<Vector2>();
+    }
 
-        if (input.sqrMagnitude > 0.01f)
-        {
-            move = transform.right * input.x + transform.forward * input.y;
-            move = Vector3.ClampMagnitude(move, 1f);
-        }
-
+    private void ApplyGravity()
+    {
         if (controller.isGrounded && velocity.y < 0f)
-        {
             velocity.y = -2f;
-        }
 
         velocity.y += gravity * Time.deltaTime;
+    }
 
-        Vector3 movement = move * walkSpeed * Time.deltaTime;
-        movement += velocity * Time.deltaTime;
+    private void MovePlayer()
+    {
+        Vector3 move =
+            transform.right * moveInput.x +
+            transform.forward * moveInput.y;
 
-        controller.Move(movement);
+        move = Vector3.ClampMagnitude(move, 1f);
+
+        float speed =
+            sprintAction.action.IsPressed()
+            ? sprintSpeed
+            : walkSpeed;
+
+        Vector3 movement =
+            move * speed +
+            velocity;
+
+        controller.Move(
+            movement * Time.deltaTime);
     }
 }

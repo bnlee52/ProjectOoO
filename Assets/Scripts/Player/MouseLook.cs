@@ -3,12 +3,36 @@ using UnityEngine.InputSystem;
 
 public class MouseLook : MonoBehaviour
 {
-    [SerializeField] private InputActionReference mouseLookAction;
-    [SerializeField] private float mouseSensitivity = 100f;
-    [SerializeField] private float pitchClamp = 90f;
+    [Header("References")]
+    [SerializeField] private Transform player;
 
-    private float pitchRotation;
-    private Vector2 mouseInput;
+    [Header("Input")]
+    [SerializeField] private InputActionReference lookAction;
+
+    [Header("Settings")]
+    [SerializeField] private float sensitivity = 2f;
+    [SerializeField] private float maxPitch = 89f;
+
+    private Vector2 lookInput;
+    private float pitch;
+
+    private void Awake()
+    {
+        if (player == null)
+            player = transform.parent;
+    }
+
+    private void OnEnable()
+    {
+        if (lookAction != null)
+            lookAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (lookAction != null)
+            lookAction.action.Disable();
+    }
 
     private void Start()
     {
@@ -16,51 +40,35 @@ public class MouseLook : MonoBehaviour
         Cursor.visible = false;
     }
 
-    private void OnEnable()
-    {
-        if (mouseLookAction != null)
-        {
-            mouseLookAction.action.Enable();
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (mouseLookAction != null)
-        {
-            mouseLookAction.action.Disable();
-        }
-    }
-
     private void Update()
     {
-        if (mouseLookAction == null || mouseLookAction.action == null)
-        {
-            return;
-        }
-
-        mouseInput = mouseLookAction.action.ReadValue<Vector2>();
-
-        float yaw = mouseInput.x * mouseSensitivity * Time.deltaTime;
-
-        if (transform.parent != null)
-        {
-            transform.parent.Rotate(Vector3.up * yaw);
-        }
+        lookInput = lookAction.action.ReadValue<Vector2>();
     }
 
     private void LateUpdate()
     {
-        if (mouseLookAction == null || mouseLookAction.action == null)
-        {
-            return;
-        }
+        RotatePlayer();
+        RotateCamera();
+    }
 
-        float pitch = mouseInput.y * mouseSensitivity * Time.deltaTime;
+    private void RotatePlayer()
+    {
+        float yaw = lookInput.x * sensitivity * Time.deltaTime;
+        player.Rotate(Vector3.up * yaw);
+    }
 
-        pitchRotation -= pitch;
-        pitchRotation = Mathf.Clamp(pitchRotation, -pitchClamp, pitchClamp);
+    private void RotateCamera()
+    {
+        pitch -= lookInput.y * sensitivity * Time.deltaTime;
 
-        transform.localRotation = Quaternion.Euler(pitchRotation, 0f, 0f);
+        pitch = Mathf.Clamp(
+            pitch,
+            -maxPitch,
+            maxPitch);
+
+        transform.localRotation = Quaternion.Euler(
+            pitch,
+            0f,
+            0f);
     }
 }
